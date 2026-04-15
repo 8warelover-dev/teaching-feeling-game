@@ -1,10 +1,12 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useGameStore } from './stores/gameStore'
 import { DialogueBox } from './components/DialogueBox'
+import { EventDialogueBox } from './components/EventDialogueBox'
 import { getRandomDialogue } from './data/dialogues'
 import { getUnlockedLocations, getLocationById } from './data/locations'
-import { getShopItems } from './data/items'
+import { getShopItems, getClothesShopItems } from './data/items'
 import type { TouchArea, Dialogue, DialogueChoice, Item, Expression } from './types'
+import './styles/game.css'
 
 // 表情に対応する立ち絵画像
 const expressionImages: Record<string, string> = {
@@ -18,7 +20,7 @@ const expressionImages: Record<string, string> = {
   loving: '/images/character/loving.jpeg',
 }
 
-type Screen = 'main' | 'touch' | 'location' | 'shop' | 'gift' | 'dialogue'
+type Screen = 'main' | 'touch' | 'location' | 'shop' | 'gift' | 'dialogue' | 'event' | 'outfit' | 'clothesShop'
 
 function App() {
   const [isStarted, setIsStarted] = useState(false)
@@ -31,6 +33,7 @@ function App() {
     player,
     date,
     currentExpression,
+    pendingEvent,
     talk,
     touch,
     goOut,
@@ -41,7 +44,31 @@ function App() {
     spendMoney,
     addItem,
     setExpression,
+    checkForEvents,
+    clearPendingEvent,
+    changeOutfit,
+    unlockOutfit,
   } = useGameStore()
+
+  // 現在表示中のイベントダイアログ
+  const [currentEventDialogue, setCurrentEventDialogue] = useState<Dialogue | null>(null)
+  const [currentEventId, setCurrentEventId] = useState<string | null>(null)
+
+  // ステータス変動後にイベントチェック
+  useEffect(() => {
+    if (screen === 'main' && !pendingEvent) {
+      checkForEvents()
+    }
+  }, [girl.stats, screen, pendingEvent, checkForEvents])
+
+  // ペンディングイベントがあれば自動的にイベント画面へ
+  useEffect(() => {
+    if (pendingEvent && screen === 'main') {
+      setCurrentEventId(pendingEvent.id)
+      setCurrentEventDialogue(pendingEvent.dialogues[0])
+      setScreen('event')
+    }
+  }, [pendingEvent, screen])
 
   // タイトル画面
   if (!isStarted) {
@@ -80,6 +107,15 @@ function App() {
     setCurrentDialogueData(null)
     setScreen('main')
     setMessage('（会話が終わった）')
+  }
+
+  // イベント会話終了
+  const handleEventComplete = () => {
+    setCurrentEventDialogue(null)
+    setCurrentEventId(null)
+    clearPendingEvent()
+    setScreen('main')
+    setMessage('......')
   }
 
   // 選択肢選択
@@ -162,6 +198,31 @@ function App() {
     setMessage('（翌日になった）')
   }
 
+  // 衣装を購入
+  const handleBuyOutfit = (item: Item) => {
+    if (player.money < item.price) {
+      setMessage('（お金が足りない...）')
+      return
+    }
+
+    // 既に持っているかチェック
+    if (girl.unlockedOutfits.includes(item.id)) {
+      setMessage('（既に持っている）')
+      return
+    }
+
+    spendMoney(item.price)
+    unlockOutfit(item.id)
+    setMessage(`（${item.name}を買った）`)
+  }
+
+  // 衣装を変更
+  const handleChangeOutfit = (outfitId: string) => {
+    changeOutfit(outfitId)
+    setScreen('main')
+    setMessage('（着替えた）')
+  }
+
   // 解放済みロケーション
   const unlockedLocations = getUnlockedLocations(
     girl.stats.trust,
@@ -171,6 +232,18 @@ function App() {
 
   // ショップアイテム
   const shopItems = getShopItems()
+
+  // 服屋アイテム
+  const clothesShopItems = getClothesShopItems()
+
+  // 衣装名マッピング
+  const outfitNames: Record<string, string> = {
+    default: 'セーラー服',
+    outfit_casual: 'カジュアル服',
+    outfit_dress: 'ワンピース',
+    outfit_maid: 'メイド服',
+    outfit_swimsuit: '水着',
+  }
 
   // プレゼント可能なアイテム
   const giftableItems = player.items.filter(
@@ -214,8 +287,20 @@ function App() {
           />
         )}
 
+        {/* イベントモード */}
+        {screen === 'event' && currentEventDialogue && currentEventId && (
+          <EventDialogueBox
+            eventId={currentEventId}
+            dialogue={currentEventDialogue}
+            girlName={girl.name}
+            onComplete={handleEventComplete}
+            onChoiceSelect={handleChoiceSelect}
+            onExpressionChange={handleExpressionChange}
+          />
+        )}
+
         {/* メッセージボックス（非会話時） */}
-        {screen !== 'dialogue' && (
+        {screen !== 'dialogue' && screen !== 'event' && (
           <div style={styles.messageBox}>
             <p style={styles.messageText}>{message}</p>
           </div>
@@ -254,6 +339,19 @@ function App() {
               </button>
               <button style={styles.actionButton} onClick={() => setScreen('shop')}>
                 買い物
+              </button>
+              <button
+                style={{
+                  ...styles.actionButton,
+                  opacity: girl.unlockedOutfits.length > 1 ? 1 : 0.5,
+                }}
+                onClick={() => girl.unlockedOutfits.length > 1 && setScreen('outfit')}
+                disabled={girl.unlockedOutfits.length <= 1}
+              >
+                着替え
+              </button>
+              <button style={styles.actionButton} onClick={() => setScreen('clothesShop')}>
+                服屋
               </button>
               <button style={styles.actionButton} onClick={handleRest}>
                 休む
@@ -352,6 +450,66 @@ function App() {
                   >
                     {item.name}
                   </button>
+                ))}
+              </div>
+              <button style={styles.backButton} onClick={() => setScreen('main')}>
+                戻る
+              </button>
+            </div>
+          )}
+
+          {/* 着替え選択 */}
+          {screen === 'outfit' && (
+            <div style={styles.subMenu}>
+              <h4 style={styles.subMenuTitle}>何を着る？</h4>
+              <div style={styles.subMenuButtons}>
+                {girl.unlockedOutfits.map(outfitId => (
+                  <button
+                    key={outfitId}
+                    style={{
+                      ...styles.subMenuButton,
+                      backgroundColor: girl.currentOutfit === outfitId ? '#ff69b4' : '#4a4a6e',
+                    }}
+                    onClick={() => handleChangeOutfit(outfitId)}
+                  >
+                    {outfitNames[outfitId] || outfitId}
+                    {girl.currentOutfit === outfitId && ' (着用中)'}
+                  </button>
+                ))}
+              </div>
+              <button style={styles.backButton} onClick={() => setScreen('main')}>
+                戻る
+              </button>
+            </div>
+          )}
+
+          {/* 服屋 */}
+          {screen === 'clothesShop' && (
+            <div style={styles.subMenu}>
+              <h4 style={styles.subMenuTitle}>服屋</h4>
+              <div style={styles.shopList}>
+                {clothesShopItems.map(item => (
+                  <div key={item.id} style={styles.shopItem}>
+                    <div>
+                      <div style={styles.itemName}>{item.name}</div>
+                      <div style={styles.itemDesc}>{item.description}</div>
+                    </div>
+                    <button
+                      style={{
+                        ...styles.buyButton,
+                        opacity: girl.unlockedOutfits.includes(item.id)
+                          ? 0.5
+                          : player.money >= item.price
+                          ? 1
+                          : 0.5,
+                        backgroundColor: girl.unlockedOutfits.includes(item.id) ? '#666' : '#4ecdc4',
+                      }}
+                      onClick={() => handleBuyOutfit(item)}
+                      disabled={girl.unlockedOutfits.includes(item.id) || player.money < item.price}
+                    >
+                      {girl.unlockedOutfits.includes(item.id) ? '購入済' : `¥${item.price}`}
+                    </button>
+                  </div>
                 ))}
               </div>
               <button style={styles.backButton} onClick={() => setScreen('main')}>

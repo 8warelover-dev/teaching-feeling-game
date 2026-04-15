@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { Girl, GirlStats, GameDate, Item, Dialogue, Expression, TouchArea } from '../types'
+import type { Girl, GirlStats, GameDate, Item, Dialogue, Expression, TouchArea, GameEvent } from '../types'
+import { checkForTriggerableEvents } from '../data/events'
 
 interface GameStore {
   // 状態
@@ -18,6 +19,7 @@ interface GameStore {
   currentDialogue: Dialogue | null
   currentExpression: Expression
   isDialogueActive: boolean
+  pendingEvent: GameEvent | null
 
   // アクション
   talk: () => void
@@ -45,6 +47,14 @@ interface GameStore {
   setFlag: (key: string, value: boolean) => void
   markEventSeen: (eventId: string) => void
   unlockLocation: (locationId: string) => void
+
+  // 衣装操作
+  changeOutfit: (outfitId: string) => void
+  unlockOutfit: (outfitId: string) => void
+
+  // イベント操作
+  checkForEvents: () => void
+  clearPendingEvent: () => void
 
   // セーブ/リセット
   resetGame: () => void
@@ -109,6 +119,7 @@ export const useGameStore = create<GameStore>()(
       currentDialogue: null,
       currentExpression: 'scared',
       isDialogueActive: false,
+      pendingEvent: null,
 
       talk: () => {
         const { girl } = get()
@@ -358,6 +369,48 @@ export const useGameStore = create<GameStore>()(
         }
       },
 
+      changeOutfit: (outfitId) => {
+        const { girl } = get()
+        // 解放済みの衣装のみ着替え可能
+        if (girl.unlockedOutfits.includes(outfitId)) {
+          set({
+            girl: { ...girl, currentOutfit: outfitId },
+          })
+        }
+      },
+
+      unlockOutfit: (outfitId) => {
+        const { girl } = get()
+        if (!girl.unlockedOutfits.includes(outfitId)) {
+          set({
+            girl: { ...girl, unlockedOutfits: [...girl.unlockedOutfits, outfitId] },
+          })
+        }
+      },
+
+      checkForEvents: () => {
+        const { girl, seenEvents, pendingEvent } = get()
+        // 既にペンディングイベントがある場合はスキップ
+        if (pendingEvent) return
+
+        const event = checkForTriggerableEvents(girl.stats, seenEvents)
+        if (event) {
+          set({ pendingEvent: event })
+        }
+      },
+
+      clearPendingEvent: () => {
+        const { pendingEvent } = get()
+        if (pendingEvent) {
+          // イベントを見た扱いにする
+          const { seenEvents } = get()
+          set({
+            pendingEvent: null,
+            seenEvents: [...seenEvents, pendingEvent.id],
+          })
+        }
+      },
+
       resetGame: () => {
         set({
           girl: initialGirl,
@@ -369,6 +422,7 @@ export const useGameStore = create<GameStore>()(
           currentDialogue: null,
           currentExpression: 'scared',
           isDialogueActive: false,
+          pendingEvent: null,
         })
       },
     }),
