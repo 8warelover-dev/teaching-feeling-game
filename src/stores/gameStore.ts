@@ -272,10 +272,19 @@ export const useGameStore = create<GameStore>()(
 
       updateStats: (stats) => {
         const { girl } = get()
-        const newStats = clampStats({ ...girl.stats, ...stats })
+        const newStats = { ...girl.stats }
+
+        // 各ステータスを加算する（上書きではなく）
+        Object.entries(stats).forEach(([key, value]) => {
+          if (value !== undefined && key in newStats) {
+            newStats[key as keyof GirlStats] += value
+          }
+        })
+
+        const clampedStats = clampStats(newStats)
         set({
-          girl: { ...girl, stats: newStats },
-          currentExpression: determineExpression(newStats),
+          girl: { ...girl, stats: clampedStats },
+          currentExpression: determineExpression(clampedStats),
         })
       },
 
