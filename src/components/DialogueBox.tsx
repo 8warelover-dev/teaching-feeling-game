@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { Dialogue, DialogueChoice } from '../types'
 import { getDialogueById } from '../data/dialogues'
+import '../styles/game.css'
 
 interface DialogueBoxProps {
   dialogue: Dialogue
@@ -21,10 +22,8 @@ export function DialogueBox({
   const [isTyping, setIsTyping] = useState(true)
   const [currentDialogue, setCurrentDialogue] = useState(dialogue)
 
-  // 文字送り速度（ms）
   const typingSpeed = 30
 
-  // 表情を更新（currentDialogue.expressionの変更時のみ）
   useEffect(() => {
     if (currentDialogue.expression) {
       onExpressionChange(currentDialogue.expression)
@@ -32,7 +31,6 @@ export function DialogueBox({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentDialogue.expression])
 
-  // 文字送りアニメーション
   useEffect(() => {
     setDisplayedText('')
     setIsTyping(true)
@@ -53,21 +51,17 @@ export function DialogueBox({
     return () => clearInterval(timer)
   }, [currentDialogue])
 
-  // クリックで文字送りスキップ or 次へ
   const handleClick = useCallback(() => {
     if (isTyping) {
-      // タイピング中ならスキップ
       setDisplayedText(currentDialogue.text)
       setIsTyping(false)
       return
     }
 
-    // 選択肢がある場合は待機
     if (currentDialogue.choices && currentDialogue.choices.length > 0) {
       return
     }
 
-    // 次の会話がある場合
     if (currentDialogue.next) {
       const nextDialogue = getDialogueById(currentDialogue.next)
       if (nextDialogue) {
@@ -76,11 +70,9 @@ export function DialogueBox({
       }
     }
 
-    // 会話終了
     onComplete()
   }, [isTyping, currentDialogue, onComplete])
 
-  // 選択肢を選んだ時
   const handleChoice = (choice: DialogueChoice) => {
     onChoiceSelect(choice)
 
@@ -95,13 +87,12 @@ export function DialogueBox({
     onComplete()
   }
 
-  // 話者名を取得
   const getSpeakerName = () => {
     switch (currentDialogue.speaker) {
       case 'girl':
         return girlName
       case 'player':
-        return 'あなた'
+        return 'You'
       case 'narration':
         return ''
       default:
@@ -112,27 +103,24 @@ export function DialogueBox({
   const speakerName = getSpeakerName()
 
   return (
-    <div style={styles.container} onClick={handleClick}>
-      {/* 話者名 */}
+    <div className="dialogue-box" onClick={handleClick}>
       {speakerName && (
-        <div style={styles.speakerName}>{speakerName}</div>
+        <div className="speaker-name">{speakerName}</div>
       )}
 
-      {/* テキスト */}
-      <div style={styles.textArea}>
-        <p style={styles.text}>{displayedText}</p>
+      <div className="dialogue-text-area">
+        <p className="dialogue-text">{displayedText}</p>
         {!isTyping && !currentDialogue.choices && (
-          <span style={styles.cursor}>▼</span>
+          <span className="dialogue-cursor">&#9660;</span>
         )}
       </div>
 
-      {/* 選択肢 */}
       {!isTyping && currentDialogue.choices && currentDialogue.choices.length > 0 && (
-        <div style={styles.choicesContainer}>
+        <div className="choices-container">
           {currentDialogue.choices.map((choice, index) => (
             <button
               key={index}
-              style={styles.choiceButton}
+              className="choice-btn"
               onClick={(e) => {
                 e.stopPropagation()
                 handleChoice(choice)
@@ -145,56 +133,4 @@ export function DialogueBox({
       )}
     </div>
   )
-}
-
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    width: '100%',
-    maxWidth: '600px',
-    padding: '16px 24px',
-    backgroundColor: 'rgba(26, 26, 46, 0.95)',
-    borderRadius: '8px',
-    border: '2px solid #ff69b4',
-    cursor: 'pointer',
-    minHeight: '100px',
-  },
-  speakerName: {
-    fontSize: '14px',
-    color: '#ff69b4',
-    marginBottom: '8px',
-    fontWeight: 'bold',
-  },
-  textArea: {
-    position: 'relative',
-  },
-  text: {
-    fontSize: '18px',
-    margin: 0,
-    lineHeight: 1.8,
-    minHeight: '54px',
-  },
-  cursor: {
-    position: 'absolute',
-    right: 0,
-    bottom: 0,
-    color: '#ff69b4',
-    animation: 'blink 1s infinite',
-  },
-  choicesContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '8px',
-    marginTop: '16px',
-  },
-  choiceButton: {
-    padding: '12px 20px',
-    fontSize: '16px',
-    backgroundColor: '#4a4a6e',
-    color: '#fff',
-    border: '2px solid #ff69b4',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    textAlign: 'left',
-    transition: 'background-color 0.2s',
-  },
 }

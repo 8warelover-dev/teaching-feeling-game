@@ -3,24 +3,67 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>育成シミュレーション</title>
+    <title>Teaching Feeling</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
       * {
         margin: 0;
         padding: 0;
         box-sizing: border-box;
       }
+
       body {
-        font-family: 'Hiragino Sans', 'Meiryo', sans-serif;
-        background: #1a1a2e;
-        color: #eee;
+        font-family: 'Zen Maru Gothic', 'Hiragino Sans', 'Meiryo', sans-serif;
+        background: linear-gradient(135deg, #fff0f5 0%, #f0f8ff 50%, #fff5ee 100%);
+        color: #5a4a6a;
+        min-height: 100vh;
+        overflow-x: hidden;
+        font-weight: 500;
+      }
+
+      #root {
         min-height: 100vh;
       }
-      #root {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 100vh;
+
+      /* Smooth scrolling */
+      html {
+        scroll-behavior: smooth;
+      }
+
+      /* Better text rendering */
+      body {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
+      }
+
+      /* Selection color */
+      ::selection {
+        background: rgba(255, 158, 196, 0.4);
+        color: #5a4a6a;
+      }
+
+      /* Scrollbar styling */
+      ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: rgba(255, 158, 196, 0.1);
+        border-radius: 9999px;
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: linear-gradient(180deg, #ff9ec4 0%, #ff6fa3 100%);
+        border-radius: 9999px;
+        border: 2px solid #fff8f0;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(180deg, #ff6fa3 0%, #c5a3ff 100%);
       }
     </style>
   </head>
