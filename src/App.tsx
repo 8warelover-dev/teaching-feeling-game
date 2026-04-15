@@ -30,6 +30,7 @@ function App() {
   const [screen, setScreen] = useState<Screen>('main')
   const [message, setMessage] = useState('......')
   const [currentDialogueData, setCurrentDialogueData] = useState<Dialogue | null>(null)
+  const [isDebugOpen, setIsDebugOpen] = useState(false)
 
   const {
     girl,
@@ -44,6 +45,7 @@ function App() {
     rest,
     resetGame,
     updateStats,
+    addMoney,
     spendMoney,
     addItem,
     setExpression,
@@ -575,22 +577,170 @@ function App() {
 
         {/* デバッグ用 */}
         <div className="status-panel debug-panel">
-          <h4 className="panel-title">Debug</h4>
-          <div className="debug-stat">恐怖: {girl.stats.fear}</div>
-          <div className="debug-stat">依存: {girl.stats.dependence}</div>
-          <div className="debug-stat">自立: {girl.stats.independence}</div>
-          <div className="debug-section-title">表情テスト:</div>
-          <div className="debug-buttons">
-            {(['neutral', 'happy', 'sad', 'embarrassed', 'angry', 'loving'] as const).map(exp => (
-              <button
-                key={exp}
-                onClick={() => setExpression(exp)}
-                className={cx('debug-btn', currentExpression === exp && 'debug-btn--active')}
-              >
-                {exp}
-              </button>
-            ))}
+          <div
+            className="debug-toggle"
+            onClick={() => setIsDebugOpen(!isDebugOpen)}
+          >
+            <h4 className="panel-title">Debug</h4>
+            <span className={cx('debug-toggle-icon', isDebugOpen && 'debug-toggle-icon--open')}>
+              ▶
+            </span>
           </div>
+
+          {isDebugOpen && (
+            <div className="debug-controls">
+              {/* ステータス調整 */}
+              <div className="debug-control-group">
+                <div className="debug-control-row">
+                  <span className="debug-control-label">親密度</span>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={girl.stats.affection}
+                    onChange={(e) => updateStats({ affection: Number(e.target.value) })}
+                    className="debug-slider"
+                  />
+                  <span className="debug-value">{girl.stats.affection}</span>
+                </div>
+
+                <div className="debug-control-row">
+                  <span className="debug-control-label">信頼度</span>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={girl.stats.trust}
+                    onChange={(e) => updateStats({ trust: Number(e.target.value) })}
+                    className="debug-slider debug-slider--trust"
+                  />
+                  <span className="debug-value">{girl.stats.trust}</span>
+                </div>
+
+                <div className="debug-control-row">
+                  <span className="debug-control-label">心理</span>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={girl.stats.mood}
+                    onChange={(e) => updateStats({ mood: Number(e.target.value) })}
+                    className="debug-slider debug-slider--mood"
+                  />
+                  <span className="debug-value">{girl.stats.mood}</span>
+                </div>
+
+                <div className="debug-control-row">
+                  <span className="debug-control-label">体調</span>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={girl.stats.health}
+                    onChange={(e) => updateStats({ health: Number(e.target.value) })}
+                    className="debug-slider debug-slider--health"
+                  />
+                  <span className="debug-value">{girl.stats.health}</span>
+                </div>
+
+                <div className="debug-control-row">
+                  <span className="debug-control-label">恐怖</span>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={girl.stats.fear}
+                    onChange={(e) => updateStats({ fear: Number(e.target.value) })}
+                    className="debug-slider debug-slider--fear"
+                  />
+                  <span className="debug-value">{girl.stats.fear}</span>
+                </div>
+
+                <div className="debug-control-row">
+                  <span className="debug-control-label">依存</span>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={girl.stats.dependence}
+                    onChange={(e) => updateStats({ dependence: Number(e.target.value) })}
+                    className="debug-slider"
+                  />
+                  <span className="debug-value">{girl.stats.dependence}</span>
+                </div>
+
+                <div className="debug-control-row">
+                  <span className="debug-control-label">自立</span>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={girl.stats.independence}
+                    onChange={(e) => updateStats({ independence: Number(e.target.value) })}
+                    className="debug-slider"
+                  />
+                  <span className="debug-value">{girl.stats.independence}</span>
+                </div>
+              </div>
+
+              {/* 所持金 */}
+              <div className="debug-control-row">
+                <span className="debug-control-label">所持金</span>
+                <input
+                  type="number"
+                  value={player.money}
+                  onChange={(e) => {
+                    const value = Number(e.target.value)
+                    if (!isNaN(value) && value >= 0) {
+                      // Reset money to 0 first, then add the desired amount
+                      const diff = value - player.money
+                      if (diff >= 0) {
+                        addMoney(diff)
+                      } else {
+                        spendMoney(-diff)
+                      }
+                    }
+                  }}
+                  className="debug-money-input"
+                />
+              </div>
+
+              {/* 表情テスト */}
+              <div className="debug-section-title">表情テスト</div>
+              <div className="debug-buttons">
+                {(['neutral', 'happy', 'sad', 'embarrassed', 'angry', 'loving'] as const).map(exp => (
+                  <button
+                    key={exp}
+                    onClick={() => setExpression(exp)}
+                    className={cx('debug-btn', currentExpression === exp && 'debug-btn--active')}
+                  >
+                    {exp}
+                  </button>
+                ))}
+              </div>
+
+              {/* クイックアクション */}
+              <div className="debug-actions">
+                <button
+                  className="debug-action-btn"
+                  onClick={() => addMoney(10000)}
+                >
+                  +10,000円
+                </button>
+                <button
+                  className="debug-action-btn debug-action-btn--danger"
+                  onClick={() => {
+                    if (confirm('ゲームをリセットしますか？')) {
+                      resetGame()
+                      setIsStarted(false)
+                    }
+                  }}
+                >
+                  リセット
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </aside>
     </div>

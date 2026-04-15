@@ -887,6 +887,172 @@ body {
   color: var(--color-pink-dark);
 }
 
+/* Debug Panel Toggle */
+.debug-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+}
+
+.debug-toggle-icon {
+  font-size: 10px;
+  transition: transform var(--transition-fast);
+}
+
+.debug-toggle-icon--open {
+  transform: rotate(90deg);
+}
+
+/* Debug Controls */
+.debug-controls {
+  margin-top: var(--spacing-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.debug-control-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.debug-control-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.debug-control-label {
+  flex: 0 0 48px;
+  font-size: 10px;
+  color: var(--color-text-secondary);
+}
+
+.debug-slider {
+  flex: 1;
+  height: 6px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: #e0e0e0;
+  border-radius: 3px;
+  outline: none;
+}
+
+.debug-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  background: var(--color-pink);
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.debug-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  background: var(--color-pink);
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.debug-slider--trust::-webkit-slider-thumb {
+  background: var(--color-sky);
+}
+
+.debug-slider--trust::-moz-range-thumb {
+  background: var(--color-sky);
+}
+
+.debug-slider--mood::-webkit-slider-thumb {
+  background: var(--color-mint);
+}
+
+.debug-slider--mood::-moz-range-thumb {
+  background: var(--color-mint);
+}
+
+.debug-slider--health::-webkit-slider-thumb {
+  background: var(--color-peach);
+}
+
+.debug-slider--health::-moz-range-thumb {
+  background: var(--color-peach);
+}
+
+.debug-slider--fear::-webkit-slider-thumb {
+  background: #888;
+}
+
+.debug-slider--fear::-moz-range-thumb {
+  background: #888;
+}
+
+.debug-value {
+  flex: 0 0 28px;
+  font-size: 10px;
+  text-align: right;
+  color: var(--color-text-secondary);
+  font-family: monospace;
+}
+
+/* Money input */
+.debug-money-input {
+  width: 80px;
+  padding: var(--spacing-xs);
+  font-size: 10px;
+  font-family: inherit;
+  border: 1px solid #ddd;
+  border-radius: var(--radius-sm);
+  text-align: right;
+}
+
+.debug-money-input:focus {
+  outline: none;
+  border-color: var(--color-pink);
+}
+
+/* Debug action buttons */
+.debug-actions {
+  display: flex;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-sm);
+}
+
+.debug-action-btn {
+  flex: 1;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: 9px;
+  font-weight: 600;
+  font-family: inherit;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.debug-action-btn:hover {
+  background: #e8e8e8;
+  border-color: var(--color-pink);
+}
+
+.debug-action-btn--danger {
+  color: #d33;
+}
+
+.debug-action-btn--danger:hover {
+  background: #fee;
+  border-color: #d33;
+}
+
 /* ===========================================
    Dialogue Box - Kawaii Bubble
    =========================================== */
